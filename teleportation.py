@@ -2,12 +2,14 @@ import sys
 import math
 import tensorflow as tf
 
-I = tf.constant(((1, 0), (0, 1)), dtype=tf.float32)
+I = tf.linalg.LinearOperatorIdentity(2) #tf.constant(((1, 0), (0, 1)), dtype=tf.float32)
 X = tf.constant(((0, 1), (1, 0)), dtype=tf.float32)
 Z = tf.constant(((1, 0), (0, -1)), dtype=tf.float32)
-H = tf.constant(((0.7071067811865475, 0.7071067811865475), (0.7071067811865475, -0.7071067811865475)), dtype=tf.float32)
-CNOT = tf.constant(((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1), (0, 0, 1, 0)), dtype=tf.float32)
-qbit = lambda alpha, name: tf.Variable((math.cos(alpha), math.sin(alpha)), name=name)
+H = tf.linalg.LinearOperatorFullMatrix(
+    ((0.7071067811865475, 0.7071067811865475), (0.7071067811865475, -0.7071067811865475)))
+CNOT = tf.linalg.LinearOperatorFullMatrix(
+    ((1.0, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1), (0, 0, 1, 0)))
+qbit = lambda alpha, name: tf.Variable([math.cos(alpha), math.sin(alpha)], name=name)
 
 def main():
     # Define the qbit to teleport
@@ -17,9 +19,14 @@ def main():
     qA = qbit(1.5707963267948966, 'A')
     qB = qbit(0.0, 'B')
     
-    # H * qA
-    sys.exit()
+    hA = H.matvec(qA)
+    hAB = tf.reshape((hA[..., None] * qB[None, ...]), (-1,))
+    chAB = CNOT.matvec(hAB)
 
+    init = tf.initialize_all_variables()
+    with tf.Session() as sess:
+        sess.run(init)
+        print(sess.run(chAB))
     # Alice measures
 
     # Bob receives the qubit
