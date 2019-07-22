@@ -7,22 +7,26 @@ X = tf.linalg.LinearOperatorFullMatrix(((0.0, 1), (1, 0)))
 Z = tf.linalg.LinearOperatorFullMatrix(((1.0, 0), (0, -1)))
 H = tf.linalg.LinearOperatorFullMatrix(
     ((0.7071067811865475, 0.7071067811865475), (0.7071067811865475, -0.7071067811865475)))
+# TODO forgot to factorize after cnot??
 CNOT = tf.linalg.LinearOperatorFullMatrix(
     ((1.0, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1), (0, 0, 1, 0)))
 qbit = lambda alpha, name: tf.Variable([math.cos(alpha), math.sin(alpha)], name=name)
+
+def outer(a, b):
+    return tf.reshape((a[..., None] * b[None, ...]), (-1,))
 
 def makeEPR(*names):
     qA = qbit(1.5707963267948966, names[0])
     hA = H.matvec(qA)
     qB = qbit(0.0, names[1])
-    return hA, CNOT.matvec(tf.reshape((hA[..., None] * qB[None, ...]), (-1,)))
+    return hA, CNOT.matvec(outer(hA, qB))
 
 def measure(q, sess):
     return 0
 
 def encode(q, hA, sess):
     hC = H.matvec(q)
-    cChA = CNOT.matvec(tf.reshape((q[..., None] * hA[None, ...]), (-1,)))
+    cChA = CNOT.matvec(outer(q, hA))
     return (measure(cChA, sess) << 1) | measure(hC, sess)
 
 def main():
