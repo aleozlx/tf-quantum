@@ -22,6 +22,8 @@ def main():
     hA = H.matvec(qA)
     hAB = tf.reshape((hA[..., None] * qB[None, ...]), (-1,))
     chAB = CNOT.matvec(hAB)
+    cChA = CNOT.matvec(tf.reshape((qC[..., None] * hA[None, ...]), (-1,)))
+    hC = H.matvec(qC)
 
     init = tf.initialize_all_variables()
     with tf.Session() as sess:
